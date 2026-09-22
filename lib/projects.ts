@@ -28,6 +28,7 @@ export const projects: Project[] = [
     status: "En producción",
     forSale: true,
     price: "700€",
+    screenshot: "/screenshots/dcf.png",
   },
   {
     slug: "cartera-personal",
@@ -40,6 +41,7 @@ export const projects: Project[] = [
     status: "En producción",
     forSale: true,
     price: "900€",
+    screenshot: "/screenshots/cartera.png",
   },
   {
     slug: "truquo",
@@ -52,6 +54,7 @@ export const projects: Project[] = [
     status: "En producción",
     forSale: true,
     price: "1.200€",
+    screenshot: "/screenshots/truquo.png",
   },
 ];
 
