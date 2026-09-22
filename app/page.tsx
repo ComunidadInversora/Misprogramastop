@@ -1,4 +1,4 @@
-import { projects, paypalLink } from "@/lib/projects";
+import { projects, paypalLink, contactEmail } from "@/lib/projects";
 
 function SaleStamp() {
   return (
@@ -28,6 +28,9 @@ function ProjectDossier({
   stack,
   status,
   forSale,
+  price,
+  screenshot,
+  videoUrl,
 }: (typeof projects)[number]) {
   const host = url.replace(/^https?:\/\//, "").replace(/\/$/, "");
   return (
@@ -42,6 +45,29 @@ function ProjectDossier({
         <p className="text-sm sm:text-base mb-4" style={{ color: "var(--fg-soft)" }}>
           {tagline}
         </p>
+
+        {screenshot && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={screenshot}
+            alt={`Captura de ${name}`}
+            className="w-full rounded-sm mb-5"
+            style={{ border: "1px solid var(--line)" }}
+          />
+        )}
+
+        {videoUrl && (
+          <div className="mb-5 rounded-sm overflow-hidden" style={{ border: "1px solid var(--line)", aspectRatio: "16/9" }}>
+            <iframe
+              src={videoUrl}
+              className="w-full h-full"
+              title={`Vídeo de ${name}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        )}
+
         <p className="text-sm sm:text-[15px] leading-relaxed mb-6" style={{ color: "var(--fg)" }}>
           {description}
         </p>
@@ -52,7 +78,7 @@ function ProjectDossier({
           {status}
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4 mb-3">
           <a
             href={url}
             target="_blank"
@@ -68,13 +94,22 @@ function ProjectDossier({
               href={paypalLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm px-4 py-2 rounded-sm"
+              className="text-sm px-4 py-2 rounded-sm font-medium"
               style={{ background: "var(--stamp)", color: "#1a1204" }}
             >
-              Comprar por PayPal
+              Comprar por PayPal{price ? ` — ${price}` : ""}
             </a>
           )}
         </div>
+
+        {forSale && (
+          <p className="text-xs" style={{ color: "var(--fg-soft)" }}>
+            Tras el pago te escribo a tu email de PayPal con el acceso al código y las instrucciones de instalación.{" "}
+            <a href={`mailto:${contactEmail}`} className="underline" style={{ color: "var(--fg-soft)" }}>
+              ¿Dudas antes de comprar?
+            </a>
+          </p>
+        )}
       </div>
     </article>
   );
@@ -104,7 +139,10 @@ export default function Home() {
 
         <footer className="mt-16 sm:mt-20 pt-6" style={{ borderTop: "1px solid var(--line)" }}>
           <p className="text-xs" style={{ color: "var(--fg-soft)" }}>
-            El precio de cada proyecto se negocia directamente — el botón de PayPal es solo para iniciar la conversación de compra.
+            ¿Preguntas sobre cualquiera de los proyectos?{" "}
+            <a href={`mailto:${contactEmail}`} className="underline" style={{ color: "var(--fg-soft)" }}>
+              {contactEmail}
+            </a>
           </p>
         </footer>
       </div>
