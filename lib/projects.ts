@@ -7,6 +7,11 @@ export interface Project {
   stack: string[];
   status: string;
   forSale: boolean;
+  price?: string;
+  /** Ruta a una imagen en /public, ej. "/screenshots/dcf.png". Opcional. */
+  screenshot?: string;
+  /** URL de embed de YouTube (formato .../embed/ID), no listado si quieres. Opcional. */
+  videoUrl?: string;
 }
 
 // Añadir un proyecto nuevo es solo añadir un objeto aquí — el resto de la
@@ -22,6 +27,7 @@ export const projects: Project[] = [
     stack: ["Next.js", "Supabase", "SEC EDGAR", "Financial Modeling Prep"],
     status: "En producción",
     forSale: true,
+    price: "700€",
   },
   {
     slug: "cartera-personal",
@@ -33,6 +39,7 @@ export const projects: Project[] = [
     stack: ["Next.js", "Supabase"],
     status: "En producción",
     forSale: true,
+    price: "900€",
   },
   {
     slug: "truquo",
@@ -44,7 +51,9 @@ export const projects: Project[] = [
     stack: ["JavaScript", "Supabase", "Panel de administración"],
     status: "En producción",
     forSale: true,
+    price: "1.200€",
   },
 ];
 
 export const paypalLink = "https://paypal.me/truquo";
+export const contactEmail = "lacomunidadinversora@gmail.com";
