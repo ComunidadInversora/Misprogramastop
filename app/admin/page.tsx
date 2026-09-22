@@ -1,302 +1,150 @@
-"use client";
+import { projects, paypalLink, contactEmail } from "@/lib/projects";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase, type Project } from "@/lib/supabase";
-
-type Draft = Project & { stackText: string };
-
-function toDraft(p: Project): Draft {
-  return { ...p, stackText: p.stack.join(", ") };
-}
-
-const EMPTY = (): Draft => ({
-  slug: "",
-  name: "",
-  tagline: "",
-  description: "",
-  url: "",
-  stack: [],
-  stackText: "",
-  status: "En producción",
-  for_sale: true,
-  price: "",
-  screenshot: null,
-  video_url: null,
-  sort_order: 0,
-  updated_at: new Date().toISOString(),
-});
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function SaleStamp() {
   return (
-    <label className="block mb-3">
-      <span className="block text-xs mb-1" style={{ color: "var(--fg-soft)" }}>
-        {label}
-      </span>
-      {children}
-    </label>
+    <div
+      className="absolute top-4 right-4 sm:top-6 sm:right-6 select-none"
+      style={{ transform: "rotate(-7deg)" }}
+      aria-hidden
+    >
+      <div
+        className="font-mono text-[10px] sm:text-xs tracking-wide px-2.5 py-1 rounded-sm"
+        style={{
+          color: "var(--stamp)",
+          border: "1.5px solid var(--stamp)",
+        }}
+      >
+        EN VENTA
+      </div>
+    </div>
   );
 }
 
-const inputCls = "w-full rounded-sm px-3 py-2 text-sm";
-const inputStyle = { background: "var(--ink)", border: "1px solid var(--line)", color: "var(--fg)" };
-
-export default function AdminPage() {
-  const router = useRouter();
-  const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [savingSlug, setSavingSlug] = useState<string | null>(null);
-  const [uploadingSlug, setUploadingSlug] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  async function load() {
-    setLoading(true);
-    const { data, error: fetchError } = await supabase.from("projects").select("*").order("sort_order", { ascending: true });
-    if (fetchError) setError(fetchError.message);
-    else setDrafts(((data as Project[]) ?? []).map(toDraft));
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  function updateDraft(slug: string, patch: Partial<Draft>) {
-    setDrafts((prev) => prev.map((d) => (d.slug === slug ? { ...d, ...patch } : d)));
-  }
-
-  async function saveDraft(draft: Draft) {
-    if (!draft.slug.trim()) {
-      alert("El slug no puede estar vacío (es el identificador único, ej. 'screener-dcf').");
-      return;
-    }
-    setSavingSlug(draft.slug);
-    setMsg(null);
-    const { stackText, ...rest } = draft;
-    const row: Project = {
-      ...rest,
-      stack: stackText.split(",").map((s) => s.trim()).filter(Boolean),
-      updated_at: new Date().toISOString(),
-    };
-    const { error: saveError } = await supabase.from("projects").upsert(row, { onConflict: "slug" });
-    setSavingSlug(null);
-    if (saveError) {
-      alert(`Error al guardar: ${saveError.message}`);
-      return;
-    }
-    setMsg(`"${row.name || row.slug}" guardado.`);
-    load();
-  }
-
-  async function deleteDraft(slug: string) {
-    if (!confirm(`¿Seguro que quieres borrar "${slug}"? No se puede deshacer.`)) return;
-    const { error: deleteError } = await supabase.from("projects").delete().eq("slug", slug);
-    if (deleteError) {
-      alert(`Error al borrar: ${deleteError.message}`);
-      return;
-    }
-    load();
-  }
-
-  async function uploadScreenshot(slug: string, file: File) {
-    setUploadingSlug(slug);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("slug", slug);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error ?? "Error al subir la imagen.");
-        return;
-      }
-      updateDraft(slug, { screenshot: data.url });
-    } catch {
-      alert("Error al conectar con el servidor.");
-    } finally {
-      setUploadingSlug(null);
-    }
-  }
-
-  async function logout() {
-    await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
-    router.refresh();
-  }
-
-  function addNew() {
-    setDrafts((prev) => [...prev, EMPTY()]);
-  }
-
+function ProjectDossier({
+  name,
+  tagline,
+  description,
+  url,
+  stack,
+  status,
+  forSale,
+  price,
+  screenshot,
+  videoUrl,
+}: (typeof projects)[number]) {
+  const host = url.replace(/^https?:\/\//, "").replace(/\/$/, "");
   return (
-    <main className="min-h-screen">
-      <div className="max-w-2xl mx-auto px-5 sm:px-6 py-10 sm:py-14">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <p className="font-mono text-xs mb-1" style={{ color: "var(--accent)" }}>
-              Taller — admin
-            </p>
-            <h1 className="font-display text-2xl font-semibold">Proyectos</h1>
+    <article
+      className="relative rounded-md p-6 sm:p-8"
+      style={{ background: "var(--panel)", border: "1px solid var(--line)" }}
+    >
+      {forSale && <SaleStamp />}
+
+      <div className="max-w-xl">
+        <h2 className="font-display text-2xl sm:text-3xl font-semibold mb-1.5 pr-20">{name}</h2>
+        <p className="text-sm sm:text-base mb-4" style={{ color: "var(--fg-soft)" }}>
+          {tagline}
+        </p>
+
+        {screenshot && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={screenshot}
+            alt={`Captura de ${name}`}
+            className="w-full rounded-sm mb-5"
+            style={{ border: "1px solid var(--line)" }}
+          />
+        )}
+
+        {videoUrl && (
+          <div className="mb-5 rounded-sm overflow-hidden" style={{ border: "1px solid var(--line)", aspectRatio: "16/9" }}>
+            <iframe
+              src={videoUrl}
+              className="w-full h-full"
+              title={`Vídeo de ${name}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
           </div>
-          <button onClick={logout} className="text-xs underline" style={{ color: "var(--fg-soft)" }}>
-            Cerrar sesión
-          </button>
+        )}
+
+        <p className="text-sm sm:text-[15px] leading-relaxed mb-6" style={{ color: "var(--fg)" }}>
+          {description}
+        </p>
+
+        <div className="font-mono text-[11px] sm:text-xs mb-6" style={{ color: "var(--fg-soft)" }}>
+          {stack.join(" · ")}
+          <span style={{ color: "var(--line)" }}> — </span>
+          {status}
         </div>
 
-        {msg && (
-          <p className="text-xs mb-4" style={{ color: "var(--accent)" }}>
-            {msg}
+        <div className="flex flex-wrap items-center gap-4 mb-3">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm underline underline-offset-4 decoration-1"
+            style={{ color: "var(--accent)", textDecorationColor: "var(--accent)" }}
+          >
+            Abrir {host}
+          </a>
+
+          {forSale && (
+            <a
+              href={paypalLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm px-4 py-2 rounded-sm font-medium"
+              style={{ background: "var(--stamp)", color: "#1a1204" }}
+            >
+              Comprar por PayPal{price ? ` — ${price}` : ""}
+            </a>
+          )}
+        </div>
+
+        {forSale && (
+          <p className="text-xs" style={{ color: "var(--fg-soft)" }}>
+            Tras el pago te escribo a tu email de PayPal con el acceso al código y las instrucciones de instalación.{" "}
+            <a href={`mailto:${contactEmail}`} className="underline" style={{ color: "var(--fg-soft)" }}>
+              ¿Dudas antes de comprar?
+            </a>
           </p>
         )}
-        {error && (
-          <p className="text-xs mb-4" style={{ color: "var(--stamp)" }}>
-            {error}
+      </div>
+    </article>
+  );
+}
+
+export default function Home() {
+  return (
+    <main className="min-h-screen">
+      <div className="max-w-2xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
+        <header className="mb-14 sm:mb-20">
+          <p className="font-mono text-xs mb-3" style={{ color: "var(--accent)" }}>
+            Taller
           </p>
-        )}
-        {loading && (
-          <p className="text-sm" style={{ color: "var(--fg-soft)" }}>
-            Cargando…
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold leading-tight mb-4 max-w-md">
+            Herramientas que construyo para resolver mis propios problemas
+          </h1>
+          <p className="text-sm sm:text-base max-w-md" style={{ color: "var(--fg-soft)" }}>
+            Todas están en producción y en uso. Si alguna te sirve para lo tuyo, están disponibles.
           </p>
-        )}
+        </header>
 
-        <div className="flex flex-col gap-6">
-          {drafts.map((d) => (
-            <div key={d.slug || Math.random()} className="rounded-md p-5" style={{ background: "var(--panel)", border: "1px solid var(--line)" }}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                <Field label="Slug (identificador único, sin espacios)">
-                  <input
-                    value={d.slug}
-                    onChange={(e) => updateDraft(d.slug, { slug: e.target.value })}
-                    className={inputCls}
-                    style={inputStyle}
-                  />
-                </Field>
-                <Field label="Nombre">
-                  <input value={d.name} onChange={(e) => updateDraft(d.slug, { name: e.target.value })} className={inputCls} style={inputStyle} />
-                </Field>
-              </div>
-
-              <Field label="Frase corta (tagline)">
-                <input value={d.tagline} onChange={(e) => updateDraft(d.slug, { tagline: e.target.value })} className={inputCls} style={inputStyle} />
-              </Field>
-
-              <Field label="Descripción">
-                <textarea
-                  value={d.description}
-                  onChange={(e) => updateDraft(d.slug, { description: e.target.value })}
-                  rows={3}
-                  className={inputCls}
-                  style={inputStyle}
-                />
-              </Field>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                <Field label="URL (demo en vivo)">
-                  <input value={d.url} onChange={(e) => updateDraft(d.slug, { url: e.target.value })} className={inputCls} style={inputStyle} />
-                </Field>
-                <Field label="Precio (ej. 700€, deja vacío si no aplica)">
-                  <input
-                    value={d.price ?? ""}
-                    onChange={(e) => updateDraft(d.slug, { price: e.target.value })}
-                    className={inputCls}
-                    style={inputStyle}
-                  />
-                </Field>
-              </div>
-
-              <Field label="Stack (separado por comas)">
-                <input
-                  value={d.stackText}
-                  onChange={(e) => updateDraft(d.slug, { stackText: e.target.value })}
-                  className={inputCls}
-                  style={inputStyle}
-                />
-              </Field>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                <Field label="Estado (ej. En producción)">
-                  <input value={d.status} onChange={(e) => updateDraft(d.slug, { status: e.target.value })} className={inputCls} style={inputStyle} />
-                </Field>
-                <Field label="Orden (0 primero)">
-                  <input
-                    type="number"
-                    value={d.sort_order}
-                    onChange={(e) => updateDraft(d.slug, { sort_order: parseInt(e.target.value, 10) || 0 })}
-                    className={inputCls}
-                    style={inputStyle}
-                  />
-                </Field>
-              </div>
-
-              <Field label="Vídeo (URL de embed de YouTube, ej. https://www.youtube.com/embed/XXXX)">
-                <input
-                  value={d.video_url ?? ""}
-                  onChange={(e) => updateDraft(d.slug, { video_url: e.target.value })}
-                  className={inputCls}
-                  style={inputStyle}
-                />
-              </Field>
-
-              <label className="flex items-center gap-2 mb-4 text-sm">
-                <input type="checkbox" checked={d.for_sale} onChange={(e) => updateDraft(d.slug, { for_sale: e.target.checked })} />
-                En venta (muestra el sello y el botón de PayPal)
-              </label>
-
-              <div className="mb-4">
-                <span className="block text-xs mb-1.5" style={{ color: "var(--fg-soft)" }}>
-                  Captura de pantalla
-                </span>
-                {d.screenshot && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={d.screenshot} alt="" className="w-full max-w-xs rounded-sm mb-2" style={{ border: "1px solid var(--line)" }} />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploadingSlug === d.slug || !d.slug}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) uploadScreenshot(d.slug, file);
-                  }}
-                  className="text-xs"
-                />
-                {uploadingSlug === d.slug && (
-                  <span className="text-xs ml-2" style={{ color: "var(--fg-soft)" }}>
-                    Subiendo…
-                  </span>
-                )}
-                {!d.slug && (
-                  <p className="text-[11px] mt-1" style={{ color: "var(--stamp)" }}>
-                    Escribe el slug antes de subir la imagen.
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => saveDraft(d)}
-                  disabled={savingSlug === d.slug}
-                  className="text-sm px-4 py-2 rounded-sm font-medium disabled:opacity-50"
-                  style={{ background: "var(--accent)", color: "#0a1a17" }}
-                >
-                  {savingSlug === d.slug ? "Guardando…" : "Guardar"}
-                </button>
-                <button onClick={() => deleteDraft(d.slug)} className="text-xs underline" style={{ color: "var(--stamp)" }}>
-                  Borrar proyecto
-                </button>
-              </div>
-            </div>
+        <div className="flex flex-col gap-6 sm:gap-8">
+          {projects.map((p) => (
+            <ProjectDossier key={p.slug} {...p} />
           ))}
         </div>
 
-        <button
-          onClick={addNew}
-          className="mt-6 text-sm px-4 py-2 rounded-sm"
-          style={{ border: "1px dashed var(--accent)", color: "var(--accent)" }}
-        >
-          + Nuevo proyecto
-        </button>
+        <footer className="mt-16 sm:mt-20 pt-6" style={{ borderTop: "1px solid var(--line)" }}>
+          <p className="text-xs" style={{ color: "var(--fg-soft)" }}>
+            ¿Preguntas sobre cualquiera de los proyectos?{" "}
+            <a href={`mailto:${contactEmail}`} className="underline" style={{ color: "var(--fg-soft)" }}>
+              {contactEmail}
+            </a>
+          </p>
+        </footer>
       </div>
     </main>
   );
