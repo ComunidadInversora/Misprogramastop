@@ -56,7 +56,7 @@ function ProjectDossier({
           />
         )}
 
-        {videoUrl && (
+        {videoUrl ? (
           <div className="mb-5 rounded-sm overflow-hidden" style={{ border: "1px solid var(--line)", aspectRatio: "16/9" }}>
             <iframe
               src={videoUrl}
@@ -65,6 +65,17 @@ function ProjectDossier({
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
+          </div>
+        ) : (
+          <div
+            className="mb-5 rounded-sm flex items-center justify-center font-mono text-xs"
+            style={{
+              border: "1px dashed var(--accent)",
+              color: "var(--fg-soft)",
+              aspectRatio: "16/9",
+            }}
+          >
+            Vídeo pendiente (enlace de YouTube)
           </div>
         )}
 
