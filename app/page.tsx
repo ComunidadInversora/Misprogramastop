@@ -17,21 +17,45 @@ function SaleStamp() {
   );
 }
 
-function ProjectDossier({ name, tagline, description, url, stack, status, for_sale, price, screenshot, video_url }: Project) {
+function ProjectDossier({ name, tagline, description, url, stack, status, for_sale, price, screenshots, video_url }: Project) {
   const host = url.replace(/^https?:\/\//, "").replace(/\/$/, "");
   return (
     <article className="relative rounded-md p-6 sm:p-8" style={{ background: "var(--panel)", border: "1px solid var(--line)" }}>
       {for_sale && <SaleStamp />}
 
-      <div className="max-w-xl">
+      <div>
         <h2 className="font-display text-2xl sm:text-3xl font-semibold mb-1.5 pr-20">{name}</h2>
         <p className="text-sm sm:text-base mb-4" style={{ color: "var(--fg-soft)" }}>
           {tagline}
         </p>
 
-        {screenshot && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={screenshot} alt={`Captura de ${name}`} className="w-full rounded-sm mb-5" style={{ border: "1px solid var(--line)" }} />
+        {screenshots.length > 0 && (
+          <div className="mb-5">
+            <a href={screenshots[0]} target="_blank" rel="noopener noreferrer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={screenshots[0]}
+                alt={`Captura de ${name}`}
+                className="w-full rounded-sm cursor-zoom-in"
+                style={{ border: "1px solid var(--line)" }}
+              />
+            </a>
+            {screenshots.length > 1 && (
+              <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+                {screenshots.slice(1).map((src, i) => (
+                  <a key={i} href={src} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      alt={`Captura ${i + 2} de ${name}`}
+                      className="h-20 rounded-sm cursor-zoom-in"
+                      style={{ border: "1px solid var(--line)" }}
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {video_url ? (
@@ -114,7 +138,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen">
-      <div className="max-w-2xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
+      <div className="max-w-3xl mx-auto px-5 sm:px-6 py-14 sm:py-20">
         <header className="mb-14 sm:mb-20">
           <p className="font-mono text-xs mb-3" style={{ color: "var(--accent)" }}>
             Taller
