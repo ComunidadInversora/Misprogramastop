@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, paypalLink, contactEmail, type Project } from "@/lib/supabase";
+import Gallery from "@/components/Gallery";
 
 // Siempre trae los datos frescos de Supabase (no cachea la página estática),
 // así los cambios desde /admin se ven al instante sin esperar a un redeploy.
@@ -29,34 +30,7 @@ function ProjectDossier({ name, tagline, description, url, stack, status, for_sa
           {tagline}
         </p>
 
-        {screenshots.length > 0 && (
-          <div className="mb-5">
-            <a href={screenshots[0]} target="_blank" rel="noopener noreferrer">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={screenshots[0]}
-                alt={`Captura de ${name}`}
-                className="w-full rounded-sm cursor-zoom-in"
-                style={{ border: "1px solid var(--line)" }}
-              />
-            </a>
-            {screenshots.length > 1 && (
-              <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
-                {screenshots.slice(1).map((src, i) => (
-                  <a key={i} href={src} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={src}
-                      alt={`Captura ${i + 2} de ${name}`}
-                      className="h-20 rounded-sm cursor-zoom-in"
-                      style={{ border: "1px solid var(--line)" }}
-                    />
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <Gallery screenshots={screenshots} name={name} />
 
         {video_url ? (
           <div className="mb-5 rounded-sm overflow-hidden" style={{ border: "1px solid var(--line)", aspectRatio: "16/9" }}>
