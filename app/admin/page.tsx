@@ -117,7 +117,11 @@ export default function AdminPage() {
       }
       if (uploadedUrls.length > 0) {
         setDrafts((prev) =>
-          prev.map((d) => (d.slug === slug ? { ...d, screenshots: [...d.screenshots, ...uploadedUrls] } : d))
+          prev.map((d) =>
+            d.slug === slug
+              ? { ...d, screenshots: [...d.screenshots, ...uploadedUrls.map((url) => ({ url, caption: "" }))] }
+              : d
+          )
         );
       }
     } catch {
@@ -130,6 +134,14 @@ export default function AdminPage() {
   function removeScreenshot(slug: string, index: number) {
     setDrafts((prev) =>
       prev.map((d) => (d.slug === slug ? { ...d, screenshots: d.screenshots.filter((_, i) => i !== index) } : d))
+    );
+  }
+
+  function updateCaption(slug: string, index: number, caption: string) {
+    setDrafts((prev) =>
+      prev.map((d) =>
+        d.slug === slug ? { ...d, screenshots: d.screenshots.map((s, i) => (i === index ? { ...s, caption } : s)) } : d
+      )
     );
   }
 
@@ -262,19 +274,28 @@ export default function AdminPage() {
                   Capturas de pantalla (la primera es la principal — arrastra reordenando no está soportado, borra y resube en el orden que quieras)
                 </span>
                 {d.screenshots.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {d.screenshots.map((src, i) => (
-                      <div key={i} className="relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt="" className="h-24 rounded-sm" style={{ border: "1px solid var(--line)" }} />
-                        <button
-                          onClick={() => removeScreenshot(d.slug, i)}
-                          className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center"
-                          style={{ background: "var(--stamp)", color: "#1a1204" }}
-                          title="Quitar esta imagen"
-                        >
-                          ×
-                        </button>
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {d.screenshots.map((s, i) => (
+                      <div key={i} className="w-28">
+                        <div className="relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={s.url} alt="" className="w-28 h-20 object-cover rounded-sm" style={{ border: "1px solid var(--line)" }} />
+                          <button
+                            onClick={() => removeScreenshot(d.slug, i)}
+                            className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                            style={{ background: "var(--stamp)", color: "#1a1204" }}
+                            title="Quitar esta imagen"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <input
+                          value={s.caption}
+                          onChange={(e) => updateCaption(d.slug, i, e.target.value)}
+                          placeholder="Leyenda de esta captura"
+                          className="w-full mt-1 rounded-sm px-1.5 py-1 text-[11px]"
+                          style={inputStyle}
+                        />
                       </div>
                     ))}
                   </div>
