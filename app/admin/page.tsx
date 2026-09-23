@@ -21,7 +21,7 @@ const EMPTY = (): Draft => ({
   status: "En producción",
   for_sale: true,
   price: "",
-  screenshot: null,
+  screenshots: [],
   video_url: null,
   sort_order: 0,
   updated_at: new Date().toISOString(),
@@ -99,24 +99,38 @@ export default function AdminPage() {
     load();
   }
 
-  async function uploadScreenshot(slug: string, file: File) {
+  async function uploadScreenshots(slug: string, files: FileList) {
     setUploadingSlug(slug);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("slug", slug);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error ?? "Error al subir la imagen.");
-        return;
+      const uploadedUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("slug", slug);
+        const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(`Error al subir "${file.name}": ${data.error ?? "desconocido"}`);
+          continue;
+        }
+        uploadedUrls.push(data.url);
       }
-      updateDraft(slug, { screenshot: data.url });
+      if (uploadedUrls.length > 0) {
+        setDrafts((prev) =>
+          prev.map((d) => (d.slug === slug ? { ...d, screenshots: [...d.screenshots, ...uploadedUrls] } : d))
+        );
+      }
     } catch {
       alert("Error al conectar con el servidor.");
     } finally {
       setUploadingSlug(null);
     }
+  }
+
+  function removeScreenshot(slug: string, index: number) {
+    setDrafts((prev) =>
+      prev.map((d) => (d.slug === slug ? { ...d, screenshots: d.screenshots.filter((_, i) => i !== index) } : d))
+    );
   }
 
   async function logout() {
@@ -245,19 +259,34 @@ export default function AdminPage() {
 
               <div className="mb-4">
                 <span className="block text-xs mb-1.5" style={{ color: "var(--fg-soft)" }}>
-                  Captura de pantalla
+                  Capturas de pantalla (la primera es la principal — arrastra reordenando no está soportado, borra y resube en el orden que quieras)
                 </span>
-                {d.screenshot && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={d.screenshot} alt="" className="w-full max-w-xs rounded-sm mb-2" style={{ border: "1px solid var(--line)" }} />
+                {d.screenshots.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {d.screenshots.map((src, i) => (
+                      <div key={i} className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="" className="h-24 rounded-sm" style={{ border: "1px solid var(--line)" }} />
+                        <button
+                          onClick={() => removeScreenshot(d.slug, i)}
+                          className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                          style={{ background: "var(--stamp)", color: "#1a1204" }}
+                          title="Quitar esta imagen"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   disabled={uploadingSlug === d.slug || !d.slug}
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) uploadScreenshot(d.slug, file);
+                    if (e.target.files && e.target.files.length > 0) uploadScreenshots(d.slug, e.target.files);
+                    e.target.value = "";
                   }}
                   className="text-xs"
                 />
