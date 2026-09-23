@@ -23,7 +23,7 @@ export interface Project {
   status: string;
   for_sale: boolean;
   price: string | null;
-  screenshot: string | null;
+  screenshots: string[];
   video_url: string | null;
   sort_order: number;
   updated_at: string;
