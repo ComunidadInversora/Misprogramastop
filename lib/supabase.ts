@@ -13,6 +13,11 @@ export const supabase = createClient(
   { db: { schema: "taller" } }
 );
 
+export interface Screenshot {
+  url: string;
+  caption: string;
+}
+
 export interface Project {
   slug: string;
   name: string;
@@ -23,7 +28,7 @@ export interface Project {
   status: string;
   for_sale: boolean;
   price: string | null;
-  screenshots: string[];
+  screenshots: Screenshot[];
   video_url: string | null;
   sort_order: number;
   updated_at: string;
